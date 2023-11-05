@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "open-simplex-noise": "^2.5.0",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   },
