@@ -5,6 +5,8 @@ import app4 from "./4"
 import app5 from "./5"
 import app6 from "./6"
 import app7 from "./7"
+import app8 from "./8"
+import app9 from "./9"
 
 export * from "./types"
 
@@ -16,6 +18,8 @@ export const Applets = {
     app5,
     app6,
     app7,
+    app8,
+    app9,
 }
 
-export default "app7"
+export default "app8"

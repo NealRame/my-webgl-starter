@@ -1,4 +1,4 @@
-export * from "./matrix"
+export * from "./noise"
 
 export function degToRad(
     degrees: number,

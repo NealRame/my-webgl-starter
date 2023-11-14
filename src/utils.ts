@@ -1,3 +1,7 @@
+import {
+    vec3
+} from 'gl-matrix'
+
 export function triangle2d(
     x: number,
     y: number,
@@ -76,6 +80,7 @@ export function cube(): Float32Array {
     const vert5 = [1, 0, 0]
     const vert6 = [1, 1, 0]
     const vert7 = [0, 1, 0]
+
     return new Float32Array([
         // Front face
         vert0, vert1, vert2, vert2, vert3, vert0,
@@ -94,6 +99,25 @@ export function cube(): Float32Array {
     ].flat())
 }
 
+export function normals(
+    vertices: Float32Array,
+): Float32Array {
+    const normals = new Float32Array(vertices.length)
+    for (let i = 0; i < vertices.length; i += 9) {
+        const v1 = vertices.slice(i, i + 3)
+        const v2 = vertices.slice(i + 3, i + 6)
+        const v3 = vertices.slice(i + 6, i + 9)
+        const a = vec3.sub(vec3.create(), v2, v1)
+        const b = vec3.sub(vec3.create(), v3, v1)
+        const normal = vec3.create()
+        vec3.cross(normal, a, b)
+        vec3.normalize(normal, normal)
+        normals.set(normal, i)
+        normals.set(normal, i + 3)
+        normals.set(normal, i + 6)
+    }
+    return normals
+}
 
 export function cartesianToSpherical(
     x: number,
