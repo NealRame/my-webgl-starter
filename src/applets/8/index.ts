@@ -25,8 +25,13 @@ type TState = {
 
     tranformUniformLocation: WebGLUniformLocation
     transformNormalUniformLocation: WebGLUniformLocation
+
     colorUniformLocation: WebGLUniformLocation
+
     reverseLightDirectionUniformLocation: WebGLUniformLocation
+    ambientLightUniformLocation: WebGLUniformLocation
+    directionalLightUniformLocation: WebGLUniformLocation
+
     positionAttributeLocation: number
     normalAttributeLocation: number
 
@@ -87,22 +92,28 @@ function frame(
         state.cameraAnglePhi,
     )
 
-    const modelView = mat4.create()
-    mat4.lookAt(modelView, Float32Array.from(eye), [0, 0, 0], [0, 1, 0])
+    const view = mat4.lookAt(mat4.create(), Float32Array.from(eye), [0, 0, 0], [0, 1, 0])
 
-    mat4.rotateY(modelView, modelView, state.angleY)
-    mat4.translate(modelView, modelView, [-0.5, -0.5, -0.5])
-
-    const transform = mat4.create()
-    mat4.multiply(transform, projection, modelView)
+    const model = mat4.create()
+    mat4.rotateY(model, model, state.angleY)
+    mat4.translate(model, model, [-0.5, -0.5, -0.5])
 
     const tranformNormal = mat3.create()
-    mat3.normalFromMat4(tranformNormal, modelView)
+    mat3.normalFromMat4(tranformNormal, model)
+
+    const transform = mat4.clone(projection)
+    mat4.multiply(transform, transform, view)
+    mat4.multiply(transform, transform, model)
 
     const lightDirection = vec3.create()
     vec3.normalize(lightDirection, [0.5, 0.4, 1])
 
+    const ambientLightColor = [0, 0.1, 0]
+    const directionalLightColor = [.5, .3, .6]
+
     gl.uniform4fv(state.colorUniformLocation, [1, 1, 1, 1])
+    gl.uniform3fv(state.ambientLightUniformLocation, ambientLightColor)
+    gl.uniform3fv(state.directionalLightUniformLocation, directionalLightColor)
     gl.uniform3fv(state.reverseLightDirectionUniformLocation, lightDirection)
     gl.uniformMatrix4fv(state.tranformUniformLocation, false, transform)
     gl.uniformMatrix3fv(state.transformNormalUniformLocation, false, tranformNormal)
@@ -145,6 +156,16 @@ function init(
         throw new Error("Unable to get uniform location for u_reverseLightDirection.")
     }
 
+    const ambientLightUniformLocation = gl.getUniformLocation(program, "u_ambientLightColor")
+    if (ambientLightUniformLocation == null) {
+        throw new Error("Unable to get uniform location for u_ambientLight.")
+    }
+
+    const directionalLightUniformLocation = gl.getUniformLocation(program, "u_directionalLightColor")
+    if (directionalLightUniformLocation == null) {
+        throw new Error("Unable to get uniform location for u_ambientLight.")
+    }
+
     const positionAttributeLocation = gl.getAttribLocation(program, "a_position")
     if (positionAttributeLocation < 0) {
         throw new Error(`Unable to get attribute location for a_position.`)
@@ -170,13 +191,17 @@ function init(
         projection: "perspective",
 
         colorUniformLocation,
-        reverseLightDirectionUniformLocation,
-        tranformUniformLocation,
-        transformNormalUniformLocation,
-        positionAttributeLocation,
-        normalAttributeLocation,
 
+        reverseLightDirectionUniformLocation,
+        ambientLightUniformLocation,
+        directionalLightUniformLocation,
+
+        positionAttributeLocation,
+        tranformUniformLocation,
         vertices,
+
+        normalAttributeLocation,
+        transformNormalUniformLocation,
         normals,
 
         cameraDistance,
