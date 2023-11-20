@@ -8,8 +8,7 @@ import {
     createProgram,
 } from "../../shaders"
 
-import * as utils from "../../utils"
-
+import { geometry } from "../../maths"
 import * as UI from "../../ui"
 
 import {
@@ -86,7 +85,7 @@ function frame(
         mat4.ortho(projection, -2, 2, -2, 2, 4, 8)
     }
 
-    const eye = utils.sphericalToCartesian(
+    const eye = geometry.sphericalToCartesian(
         state.cameraDistance,
         state.cameraAngleTheta,
         state.cameraAnglePhi,
@@ -178,10 +177,10 @@ function init(
     }
     gl.enableVertexAttribArray(normalAttributeLocation)
 
-    const vertices = utils.cube()
-    const normals = utils.normals(vertices)
+    const vertices = geometry.cube()
+    const normals = geometry.normals(vertices)
 
-    const [cameraDistance, cameraAngleThetha, cameraAnglePhi] = utils.cartesianToSpherical(6, 2, 6)
+    const [cameraDistance, cameraAngleThetha, cameraAnglePhi] = geometry.cartesianToSpherical(6, 2, 6)
 
     return {
         settings,
@@ -217,7 +216,7 @@ function init(
 function setupUI(
     state: TState,
 ): TState {
-    const discardProjectionSelect = UI.createSelect(state.settings, {
+    const projectionSelect = UI.createSelect(state.settings, {
         label: "Projection",
         values: [["orthographic", "Orthographic"], ["perspective", "Perspective"]],
         get value() {
@@ -259,7 +258,7 @@ function setupUI(
 
     return Object.assign(state, {
         discardUI() {
-            discardProjectionSelect()
+            projectionSelect.discard()
             canvas.removeEventListener("wheel", onMouseWheel)
             canvas.removeEventListener("mousedown", onMouseDown)
             canvas.removeEventListener("mouseup", onMouseUp)

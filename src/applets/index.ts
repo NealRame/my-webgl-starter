@@ -22,4 +22,4 @@ export const Applets = {
     app9,
 }
 
-export default "app8"
+export default "app7"

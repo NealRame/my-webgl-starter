@@ -10,12 +10,7 @@ import {
     times,
 } from "../../algorithms"
 
-import {
-    cube,
-    cartesianToSpherical,
-    sphericalToCartesian,
-} from "../../utils"
-
+import * as geometry from "../../maths/geometry"
 import * as UI from "../../ui"
 
 import {
@@ -38,9 +33,11 @@ type TState = {
     vertices: Float32Array
     colors: Float32Array
 
-    cameraDistance: number
-    cameraAngleTheta: number
-    cameraAnglePhi: number
+    eye: geometry.TPoint3D
+
+    // cameraDistance: number
+    // cameraAngleTheta: number
+    // cameraAnglePhi: number
 
     discardUI?: () => void
 }
@@ -80,14 +77,16 @@ function frame(
         mat4.ortho(projection, -2, 2, -2, 2, 4, 8)
     }
 
-    const eye = sphericalToCartesian(
-        state.cameraDistance,
-        state.cameraAngleTheta,
-        state.cameraAnglePhi,
-    )
+    // const eye = sphericalToCartesian(
+    //     state.cameraDistance,
+    //     state.cameraAngleTheta,
+    //     state.cameraAnglePhi,
+    // )
+
+    console.log(state.eye)
 
     const modelView = mat4.create()
-    mat4.lookAt(modelView, Float32Array.from(eye), [0, 0, 0], [0, 1, 0])
+    mat4.lookAt(modelView, Float32Array.from(state.eye), [0, 0, 0], [0, 1, 0])
 
     mat4.translate(modelView, modelView, [-0.5, -0.5, -0.5])
 
@@ -132,7 +131,7 @@ function init(
     gl.enableVertexAttribArray(positionAttributeLocation)
 
     const randomColor = () => [Math.random(), Math.random(), Math.random(), 1]
-    const vertices = cube()
+    const vertices = geometry.cube()
     const colors = Float32Array.from([
         ...times(6, randomColor()), // Front face
         ...times(6, randomColor()), // Back face
@@ -142,7 +141,7 @@ function init(
         ...times(6, randomColor()), // Left face
     ].flat())
 
-    const [cameraDistance, cameraAngleThetha, cameraAnglePhi] = cartesianToSpherical(6, 2, 6)
+    const eye = [6, 2, 6] as geometry.TPoint3D
 
     return {
         settings,
@@ -158,16 +157,64 @@ function init(
         vertices,
         colors,
 
-        cameraDistance,
-        cameraAngleTheta: cameraAngleThetha,
-        cameraAnglePhi,
+        eye,
+    }
+}
+
+function mouseController(
+    el: HTMLElement,
+    [eye_x, eye_y, eye_z]: geometry.TPoint3D,
+    onMouseDrag: (p: geometry.TPoint3D) => void = () => {},
+): () => void {
+    let R = Math.sqrt(eye_x**2 + eye_y**2 + eye_z**2)
+
+    const L = Math.asin(-eye_y/R)
+    const l = Math.asin(eye_y/(R*Math.cos(L)))
+
+    const state = {
+        radius: R,
+        latitude: l,
+        longitude: L,
+    }
+
+    const mousemove = (event: MouseEvent) => {
+        const { top, left, width, height } = el.getBoundingClientRect()
+        const mouse_x = event.clientX - left;
+        const mouse_y = event.clientY - top;
+
+        const S = Math.min(width, height)
+
+        state.longitude = 2*mouse_x*Math.PI/S - Math.PI
+        state.latitude = 2*(Math.atan(Math.exp(Math.PI*(height - 2*mouse_y)/S)) - Math.PI/4)
+
+        const x = state.radius*Math.cos(state.latitude)*Math.cos(state.longitude)
+        const y = -state.radius*Math.sin(state.latitude)
+        const z = state.radius*Math.cos(state.latitude)*Math.sin(state.longitude)
+
+        onMouseDrag([x, y, z])
+    }
+    const mouseup = () => {
+        el.removeEventListener("mousemove", mousemove)
+        el.removeEventListener("mouseup", mouseup)
+    }
+    const mousedown = () => {
+        el.addEventListener("mousemove", mousemove)
+        el.addEventListener("mouseup", mouseup)
+    }
+
+    el.addEventListener("mousedown", mousedown)
+
+    return () => {
+        el.removeEventListener("mousedown", mousedown)
+        el.removeEventListener("mousemove", mousemove)
+        el.removeEventListener("mouseup", mouseup)
     }
 }
 
 function setupUI(
     state: TState,
 ): TState {
-    const discardProjectionSelect = UI.createSelect(state.settings, {
+    const projectionSelect = UI.createSelect(state.settings, {
         label: "Projection",
         values: [["orthographic", "Orthographic"], ["perspective", "Perspective"]],
         get value() {
@@ -181,39 +228,41 @@ function setupUI(
 
     const canvas = state.gl.canvas as HTMLCanvasElement
 
-    const onMouseWheel = (event: WheelEvent) => {
-        const { deltaY } = event
-        state.cameraDistance = Math.max(1, state.cameraDistance - deltaY/100)
+    const discardMouseController = mouseController(canvas, state.eye, p => {
+        state.eye = p
         frame(state)
-    }
+    })
 
-    const onMouseMove = (event: MouseEvent) => {
-        const { movementX, movementY } = event
+    // const onMouseWheel = (event: WheelEvent) => {
+    //     const { deltaY } = event
+    //     state.cameraDistance = Math.max(1, state.cameraDistance - deltaY/100)
+    //     frame(state)
+    // }
 
-        state.cameraAngleTheta -= movementY/100
-        state.cameraAnglePhi -= movementX/100
-        frame(state)
-    }
+    // const onMouseMove = (event: MouseEvent) => {
+    //     const { movementX, movementY } = event
 
-    const onMouseDown = () => {
-        canvas.addEventListener("mousemove", onMouseMove)
-    }
+    //     state.cameraAngleTheta -= movementY/100
+    //     state.cameraAnglePhi -= movementX/100
+    //     frame(state)
+    // }
 
-    const onMouseUp = () => {
-        canvas.removeEventListener("mousemove", onMouseMove)
-    }
+    // const onMouseDown = () => {
+    //     canvas.addEventListener("mousemove", onMouseMove)
+    // }
 
-    canvas.addEventListener("wheel", onMouseWheel)
-    canvas.addEventListener("mousedown", onMouseDown)
-    canvas.addEventListener("mouseup", onMouseUp)
+    // const onMouseUp = () => {
+    //     canvas.removeEventListener("mousemove", onMouseMove)
+    // }
+
+    // canvas.addEventListener("wheel", onMouseWheel)
+    // canvas.addEventListener("mousedown", onMouseDown)
+    // canvas.addEventListener("mouseup", onMouseUp)
 
     return Object.assign(state, {
         discardUI() {
-            discardProjectionSelect()
-            canvas.removeEventListener("wheel", onMouseWheel)
-            canvas.removeEventListener("mousedown", onMouseDown)
-            canvas.removeEventListener("mouseup", onMouseUp)
-            canvas.removeEventListener("mousemove", onMouseMove)
+            projectionSelect.discard()
+            discardMouseController()
         }
     })
 }

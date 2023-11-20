@@ -1,4 +1,5 @@
-export * from "./noise"
+export * as geometry from "./geometry"
+export * as noise from "./noise"
 
 export function degToRad(
     degrees: number,

@@ -94,7 +94,7 @@ function setupUI(
         update()
     }
 
-    const discardShapeSelector = UI.createSelect(state.settings, {
+    const shapeSelector = UI.createSelect(state.settings, {
         label: "Shape",
         values: Object.keys(state.shapes),
         get value() {
@@ -107,7 +107,7 @@ function setupUI(
 
     state.gl.canvas.addEventListener("click", onClick)
     state.discardUI = () => {
-        discardShapeSelector()
+        shapeSelector.discard()
         state.gl.canvas.removeEventListener("click", onClick)
     }
 

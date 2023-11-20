@@ -37,12 +37,12 @@ function setupUI(
     state: TState,
     update: () => void,
 ) {
-    const discardCallbacks: Array<() => void> = []
+    const widgets: Array<UI.TWidget> = []
 
     ;["A", "B", "C"].forEach((label, index) => {
         ;UI.createHeader(state.settings, label)
         ;["r", "g", "b"].forEach((color, colorIndex) => {
-            discardCallbacks.push(UI.createNumberInput(state.settings, {
+            widgets.push(UI.createNumberInput(state.settings, {
                 label: `${color}`,
                 min: 0,
                 max: 1,
@@ -60,7 +60,7 @@ function setupUI(
     state.settings.addEventListener("input", update)
     state.discardUI = () => {
         state.settings.removeEventListener("input", update)
-        discardCallbacks.forEach(discard => discard())
+        widgets.forEach(w => w.discard())
         state.settings.innerHTML = ""
     }
 }

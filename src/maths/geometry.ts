@@ -2,60 +2,8 @@ import {
     vec3
 } from 'gl-matrix'
 
-export function triangle2d(
-    x: number,
-    y: number,
-    base: number,
-    height: number,
-) {
-    const ax = x
-    const ay = y + height/2
-
-    const bx = x + base/2
-    const by = y - height/2
-
-    const cx = x + base
-    const cy = y + height/2
-
-    return [
-        [ax, ay],
-        [bx, by],
-        [cx, cy],
-    ]
-}
-
-export function rectangle2d(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-) {
-    return [
-        [x - width/2, y - height/2],
-        [x + width/2, y - height/2],
-        [x + width/2, y + height/2],
-        [x + width/2, y + height/2],
-        [x - width/2, y + height/2],
-    ]
-}
-
-export function rectangle3d(
-    l: number,
-    h: number,
-    z: number,
-) {
-    return new Float32Array([
-        0, 0, z,
-        0, h, z,
-        l, h, z,
-
-        l, h, z,
-        l, 0, z,
-        0, 0, z,
-    ])
-}
-
 export type TColor = [number, number, number, number]
+export type TPoint3D = [number, number, number]
 
 export type TCuboidFacesColor = [
     // Back face

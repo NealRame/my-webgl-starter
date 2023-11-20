@@ -37,12 +37,12 @@ function setupUI(
     state: TState,
     update: () => void,
 ) {
-    const discardCallbacks: Array<() => void> = []
+    const widgets: Array<UI.TWidget> = []
 
     ;["Layer 1", "Layer 2"].forEach((layer, layerIndex) => {
         ;UI.createHeader(state.settings, layer)
         ;["Red", "Green", "Blue", "Alpha"].forEach((label, colorIndex) => {
-            discardCallbacks.push(UI.createNumberInput(state.settings, {
+            widgets.push(UI.createNumberInput(state.settings, {
                 label,
                 min: 0,
                 max: 1,
@@ -59,7 +59,7 @@ function setupUI(
             }))
         })
         ;["X", "Y"].forEach((label, index) => {
-            discardCallbacks.push(UI.createNumberInput(state.settings, {
+            widgets.push(UI.createNumberInput(state.settings, {
                 label,
                 unit: "px",
                 min: 0,
@@ -77,7 +77,7 @@ function setupUI(
             }))
         })
         ;["Width", "Height"].forEach((label, index) => {
-            discardCallbacks.push(UI.createNumberInput(state.settings, {
+            widgets.push(UI.createNumberInput(state.settings, {
                 label,
                 unit: "px",
                 min: 0,
@@ -99,7 +99,7 @@ function setupUI(
     state.settings.addEventListener("input", update)
     state.discardUI = () => {
         state.settings.removeEventListener("input", update)
-        discardCallbacks.forEach(discard => discard())
+        widgets.forEach(w => w.discard())
         state.settings.innerHTML = ""
     }
 }
