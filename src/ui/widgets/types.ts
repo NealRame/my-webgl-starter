@@ -1,7 +1,5 @@
-import type {
-    TUIDiscard,
-} from "../types"
+export type TWidgetDiscard = () => void
 
 export type TWidget = {
-    discard: TUIDiscard,
+    discard: TWidgetDiscard,
 }

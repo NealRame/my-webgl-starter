@@ -48,14 +48,7 @@ try {
         }
     })
 
-    window.addEventListener("resize", () => {
-        UI.resizeCanvasToDisplaySize(canvas)
-        if (currentApplet) {
-            currentApplet.render()
-        }
-    })
-
-    UI.resizeCanvasToDisplaySize(canvas)
+    UI.controllers.resizeCanvasToDisplaySize(canvas)
 
     appletSelector.value = defaultApplet
     appletSelector.dispatchEvent(new Event("change"))
@@ -67,5 +60,3 @@ try {
         alert("An unknown error occurred.")
     }
 }
-
-

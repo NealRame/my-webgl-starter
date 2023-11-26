@@ -216,7 +216,7 @@ function init(
 function setupUI(
     state: TState,
 ): TState {
-    const projectionSelect = UI.createSelect(state.settings, {
+    const projectionSelect = UI.widget.createSelect(state.settings, {
         label: "Projection",
         values: [["orthographic", "Orthographic"], ["perspective", "Perspective"]],
         get value() {

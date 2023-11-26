@@ -35,10 +35,6 @@ type TState = {
 
     eye: geometry.TPoint3D
 
-    // cameraDistance: number
-    // cameraAngleTheta: number
-    // cameraAnglePhi: number
-
     discardUI?: () => void
 }
 
@@ -77,17 +73,8 @@ function frame(
         mat4.ortho(projection, -2, 2, -2, 2, 4, 8)
     }
 
-    // const eye = sphericalToCartesian(
-    //     state.cameraDistance,
-    //     state.cameraAngleTheta,
-    //     state.cameraAnglePhi,
-    // )
-
-    console.log(state.eye)
-
     const modelView = mat4.create()
     mat4.lookAt(modelView, Float32Array.from(state.eye), [0, 0, 0], [0, 1, 0])
-
     mat4.translate(modelView, modelView, [-0.5, -0.5, -0.5])
 
     let transform = mat4.create()
@@ -161,60 +148,10 @@ function init(
     }
 }
 
-function mouseController(
-    el: HTMLElement,
-    [eye_x, eye_y, eye_z]: geometry.TPoint3D,
-    onMouseDrag: (p: geometry.TPoint3D) => void = () => {},
-): () => void {
-    let R = Math.sqrt(eye_x**2 + eye_y**2 + eye_z**2)
-
-    const L = Math.asin(-eye_y/R)
-    const l = Math.asin(eye_y/(R*Math.cos(L)))
-
-    const state = {
-        radius: R,
-        latitude: l,
-        longitude: L,
-    }
-
-    const mousemove = (event: MouseEvent) => {
-        const { top, left, width, height } = el.getBoundingClientRect()
-        const mouse_x = event.clientX - left;
-        const mouse_y = event.clientY - top;
-
-        const S = Math.min(width, height)
-
-        state.longitude = 2*mouse_x*Math.PI/S - Math.PI
-        state.latitude = 2*(Math.atan(Math.exp(Math.PI*(height - 2*mouse_y)/S)) - Math.PI/4)
-
-        const x = state.radius*Math.cos(state.latitude)*Math.cos(state.longitude)
-        const y = -state.radius*Math.sin(state.latitude)
-        const z = state.radius*Math.cos(state.latitude)*Math.sin(state.longitude)
-
-        onMouseDrag([x, y, z])
-    }
-    const mouseup = () => {
-        el.removeEventListener("mousemove", mousemove)
-        el.removeEventListener("mouseup", mouseup)
-    }
-    const mousedown = () => {
-        el.addEventListener("mousemove", mousemove)
-        el.addEventListener("mouseup", mouseup)
-    }
-
-    el.addEventListener("mousedown", mousedown)
-
-    return () => {
-        el.removeEventListener("mousedown", mousedown)
-        el.removeEventListener("mousemove", mousemove)
-        el.removeEventListener("mouseup", mouseup)
-    }
-}
-
 function setupUI(
     state: TState,
 ): TState {
-    const projectionSelect = UI.createSelect(state.settings, {
+    const projectionSelect = UI.widget.createSelect(state.settings, {
         label: "Projection",
         values: [["orthographic", "Orthographic"], ["perspective", "Perspective"]],
         get value() {
@@ -226,43 +163,19 @@ function setupUI(
         },
     })
 
-    const canvas = state.gl.canvas as HTMLCanvasElement
-
-    const discardMouseController = mouseController(canvas, state.eye, p => {
-        state.eye = p
-        frame(state)
+    const mouseController = UI.controllers.mouseRotator({
+        el: state.gl.canvas as HTMLCanvasElement,
+        eye: state.eye,
+        onMouseDrag: p => {
+            state.eye = p
+            frame(state)
+        },
     })
-
-    // const onMouseWheel = (event: WheelEvent) => {
-    //     const { deltaY } = event
-    //     state.cameraDistance = Math.max(1, state.cameraDistance - deltaY/100)
-    //     frame(state)
-    // }
-
-    // const onMouseMove = (event: MouseEvent) => {
-    //     const { movementX, movementY } = event
-
-    //     state.cameraAngleTheta -= movementY/100
-    //     state.cameraAnglePhi -= movementX/100
-    //     frame(state)
-    // }
-
-    // const onMouseDown = () => {
-    //     canvas.addEventListener("mousemove", onMouseMove)
-    // }
-
-    // const onMouseUp = () => {
-    //     canvas.removeEventListener("mousemove", onMouseMove)
-    // }
-
-    // canvas.addEventListener("wheel", onMouseWheel)
-    // canvas.addEventListener("mousedown", onMouseDown)
-    // canvas.addEventListener("mouseup", onMouseUp)
 
     return Object.assign(state, {
         discardUI() {
             projectionSelect.discard()
-            discardMouseController()
+            mouseController.discard()
         }
     })
 }
@@ -294,9 +207,7 @@ let applet: IApplet = {
         if (state == null) {
             throw new Error("Applet not initialized.")
         }
-
         frame(state)
-
         return this
     },
 }
