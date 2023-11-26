@@ -24,6 +24,10 @@ export function mouseRotator({
         longitude -= movementX*Math.PI/el.clientWidth
         onMouseDrag(geometry.sphericalToCartesian(radius, latitude, longitude))
     }
+    const mousewheel = ({ deltaY }: WheelEvent) => {
+        radius = radius - deltaY/100
+        onMouseDrag(geometry.sphericalToCartesian(radius, latitude, longitude))
+    }
     const mouseup = () => {
         el.removeEventListener("mousemove", mousemove)
         el.removeEventListener("mouseup", mouseup)
@@ -31,10 +35,6 @@ export function mouseRotator({
     const mousedown = () => {
         el.addEventListener("mousemove", mousemove)
         el.addEventListener("mouseup", mouseup)
-    }
-    const mousewheel = ({ deltaY }: WheelEvent) => {
-        radius = radius - deltaY/100
-        onMouseDrag(geometry.sphericalToCartesian(radius, latitude, longitude))
     }
 
     el.addEventListener("mousedown", mousedown)
