@@ -39,14 +39,11 @@ type TState = {
     vertices: Float32Array
     normals: Float32Array
 
-    cameraDistance: number
-    cameraAngleTheta: number
-    cameraAnglePhi: number
-
     animated: boolean
 
     angleY: number
 
+    readonly viewMatrix?: mat4
     discardUI?: () => void
 }
 
@@ -84,14 +81,7 @@ function frame(
     } else {
         mat4.ortho(projection, -2, 2, -2, 2, 4, 8)
     }
-
-    const eye = geometry.sphericalToCartesian(
-        state.cameraDistance,
-        state.cameraAngleTheta,
-        state.cameraAnglePhi,
-    )
-
-    const view = mat4.lookAt(mat4.create(), Float32Array.from(eye), [0, 0, 0], [0, 1, 0])
+    const view = mat4.copy(mat4.create(), state.viewMatrix ?? mat4.create())
 
     const model = mat4.create()
     mat4.rotateY(model, model, state.angleY)
@@ -180,8 +170,6 @@ function init(
     const vertices = geometry.cube()
     const normals = geometry.normals(vertices)
 
-    const [cameraDistance, cameraAngleThetha, cameraAnglePhi] = geometry.cartesianToSpherical(6, 2, 6)
-
     return {
         settings,
         gl,
@@ -203,12 +191,7 @@ function init(
         transformNormalUniformLocation,
         normals,
 
-        cameraDistance,
-        cameraAngleTheta: cameraAngleThetha,
-        cameraAnglePhi,
-
         angleY: 0,
-
         animated: false,
     }
 }
@@ -228,43 +211,31 @@ function setupUI(
         },
     })
 
-    const canvas = state.gl.canvas as HTMLCanvasElement
-
-    const onMouseWheel = (event: WheelEvent) => {
-        const { deltaY } = event
-        state.cameraDistance = Math.max(1, state.cameraDistance - deltaY/100)
-        frame(state)
-    }
-
-    const onMouseMove = (event: MouseEvent) => {
-        const { movementX, movementY } = event
-
-        state.cameraAngleTheta -= movementY/100
-        state.cameraAnglePhi -= movementX/100
-        frame(state)
-    }
-
-    const onMouseDown = () => {
-        canvas.addEventListener("mousemove", onMouseMove)
-    }
-
-    const onMouseUp = () => {
-        canvas.removeEventListener("mousemove", onMouseMove)
-    }
-
-    canvas.addEventListener("wheel", onMouseWheel)
-    canvas.addEventListener("mousedown", onMouseDown)
-    canvas.addEventListener("mouseup", onMouseUp)
-
-    return Object.assign(state, {
-        discardUI() {
-            projectionSelect.discard()
-            canvas.removeEventListener("wheel", onMouseWheel)
-            canvas.removeEventListener("mousedown", onMouseDown)
-            canvas.removeEventListener("mouseup", onMouseUp)
-            canvas.removeEventListener("mousemove", onMouseMove)
-        }
+    const eye = [6, 2, 6] as geometry.TPoint3D
+    const mouseController = UI.controllers.trackballRotator({
+        el: state.gl.canvas as HTMLCanvasElement,
+        viewDistance: vec3.length(vec3.fromValues(...eye)),
+        viewpointDirection: vec3.normalize(vec3.create(), vec3.fromValues(...eye)),
+        viewUp: vec3.fromValues(0, 1, 0),
+        onMouseDrag: () => {
+            frame(state)
+        },
     })
+
+    Object.defineProperty(state, "viewMatrix", {
+        get() {
+            return mouseController.viewMatrix
+        },
+    })
+
+    Object.defineProperty(state, "discardUI", {
+        value() {
+            projectionSelect.discard()
+            mouseController.discard()
+        },
+    })
+
+    return state
 }
 
 

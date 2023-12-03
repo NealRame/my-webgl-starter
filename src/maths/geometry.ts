@@ -78,23 +78,23 @@ export function cartesianToSpherical(
 
     const r = Math.sqrt(x*x + y*y + z*z)
     const rp = Math.sqrt(x*x + z*z)
-    const theta = Math.atan2(rp, y)
-    const phi = Math.atan2(x, z)
+    const polar = Math.atan2(rp, y)
+    const azimuth = Math.atan2(x, z)
 
-    return [r, theta, phi]
+    return [r, polar, azimuth]
 }
 
 export function sphericalToCartesian(
     r: number,
-    theta: number,
-    phi: number,
+    polar: number,
+    azimuth: number,
 ): [number, number, number] {
-    theta = theta%(Math.PI)
-    phi = phi%(2*Math.PI)
+    polar = polar
+    azimuth = azimuth
 
-    const x = r*Math.sin(theta)*Math.sin(phi)
-    const y = r*Math.cos(theta)
-    const z = r*Math.sin(theta)*Math.cos(phi)
+    const x = r*Math.sin(polar)*Math.sin(azimuth)
+    const y = r*Math.cos(polar)
+    const z = r*Math.sin(polar)*Math.cos(azimuth)
 
     return [x, y, z]
 }

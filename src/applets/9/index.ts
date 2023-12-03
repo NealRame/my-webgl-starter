@@ -1,5 +1,6 @@
 import {
     mat4,
+    vec3,
 } from "gl-matrix"
 
 import {
@@ -15,6 +16,8 @@ import {
     createProgram,
 } from "../../shaders"
 
+import * as UI from "../../ui"
+
 import * as shaderSource from "./shaders"
 
 import type {
@@ -29,60 +32,43 @@ type TState = {
     positionAttributeLocation: number
     tranformUniformLocation: WebGLUniformLocation
 
-    cameraDistance: number
-    cameraAngleTheta: number
-    cameraAnglePhi: number
-
     getNoise: noise.TNoise2DGenerator
 
     gridResolution: number
 
     vertices: Float32Array
 
+    readonly viewMatrix?: mat4
     discardUI?: () => void
 }
 
 function setupUI(
     state: TState,
 ): TState {
+    const eye = [0, 0, 10] as geometry.TPoint3D
+    const mouseController = UI.controllers.trackballRotator({
+        el: state.gl.canvas as HTMLCanvasElement,
+        viewDistance: vec3.length(vec3.fromValues(...eye)),
+        viewpointDirection: vec3.normalize(vec3.create(), vec3.fromValues(...eye)),
+        viewUp: vec3.fromValues(0, 1, 0),
+        onMouseDrag: () => {
+            frame(state)
+        },
+    })
 
-    const canvas = state.gl.canvas as HTMLCanvasElement
+    Object.defineProperty(state, "viewMatrix", {
+        get() {
+            return mouseController.viewMatrix
+        },
+    })
 
-    const onMouseWheel = (event: WheelEvent) => {
-        const { deltaY } = event
-        state.cameraDistance = Math.max(1, state.cameraDistance - deltaY/100)
-        frame(state)
-    }
+    Object.defineProperty(state, "discardUI", {
+        value() {
+            mouseController.discard()
+        },
+    })
 
-    const onMouseMove = (event: MouseEvent) => {
-        const { movementX, movementY } = event
-
-        state.cameraAngleTheta -= movementY/100
-        state.cameraAnglePhi -= movementX/100
-        frame(state)
-    }
-
-    const onMouseDown = () => {
-        canvas.addEventListener("mousemove", onMouseMove)
-    }
-
-    const onMouseUp = () => {
-        canvas.removeEventListener("mousemove", onMouseMove)
-    }
-
-    canvas.addEventListener("wheel", onMouseWheel)
-    canvas.addEventListener("mousedown", onMouseDown)
-    canvas.addEventListener("mouseup", onMouseUp)
-
-    return {
-        ...state,
-        discardUI() {
-            canvas.removeEventListener("wheel", onMouseWheel)
-            canvas.removeEventListener("mousedown", onMouseDown)
-            canvas.removeEventListener("mouseup", onMouseUp)
-            canvas.removeEventListener("mousemove", onMouseMove)
-        }
-    }
+    return state
 }
 
 function init(
@@ -100,9 +86,8 @@ function init(
     gl.enable(gl.CULL_FACE)
     gl.enable(gl.DEPTH_TEST)
 
-    const gridResolution = 25
+    const gridResolution = 32
 
-    const [cameraDistance, cameraAngleTheta, cameraAnglePhi] = geometry.cartesianToSpherical(0, 0, 6)
     const vertices: Array<geometry.TPoint3D> = []
 
     const noiseSeed = Date.now()
@@ -141,7 +126,7 @@ function init(
         }
     }
 
-    console.log(vertices)
+    // console.log(vertices)
 
     const tranformUniformLocation = gl.getUniformLocation(program, "u_MVP_matrix")
     if (tranformUniformLocation == null) {
@@ -158,10 +143,6 @@ function init(
         settings,
         gl,
         program,
-
-        cameraDistance,
-        cameraAngleTheta,
-        cameraAnglePhi,
 
         gridResolution,
 
@@ -193,15 +174,7 @@ function frame(state: TState) {
     const projection = mat4.create()
     mat4.perspective(projection, Math.PI/5, width/height, 1, Infinity)
 
-    const eye = geometry.sphericalToCartesian(
-        state.cameraDistance,
-        state.cameraAngleTheta,
-        state.cameraAnglePhi,
-    )
-
-    const modelView = mat4.create()
-    mat4.lookAt(modelView, Float32Array.from(eye), [0, 0, 0], [0, 0, 1])
-
+    const modelView = mat4.copy(mat4.create(), state.viewMatrix ?? mat4.create())
     const transform = mat4.create()
     mat4.multiply(transform, projection, modelView)
 

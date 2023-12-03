@@ -1,5 +1,5 @@
 import {
-    mat4,
+    mat4, vec3,
 } from "gl-matrix"
 
 import {
@@ -33,8 +33,7 @@ type TState = {
     vertices: Float32Array
     colors: Float32Array
 
-    eye: geometry.TPoint3D
-
+    readonly viewMatrix?: mat4
     discardUI?: () => void
 }
 
@@ -73,8 +72,7 @@ function frame(
         mat4.ortho(projection, -2, 2, -2, 2, 4, 8)
     }
 
-    const modelView = mat4.create()
-    mat4.lookAt(modelView, Float32Array.from(state.eye), [0, 0, 0], [0, 1, 0])
+    const modelView = mat4.copy(mat4.create(), state.viewMatrix ?? mat4.create())
     mat4.translate(modelView, modelView, [-0.5, -0.5, -0.5])
 
     let transform = mat4.create()
@@ -128,8 +126,6 @@ function init(
         ...times(6, randomColor()), // Left face
     ].flat())
 
-    const eye = [6, 2, 6] as geometry.TPoint3D
-
     return {
         settings,
         gl,
@@ -143,8 +139,6 @@ function init(
 
         vertices,
         colors,
-
-        eye,
     }
 }
 
@@ -163,23 +157,32 @@ function setupUI(
         },
     })
 
-    const mouseController = UI.controllers.mouseRotator({
+    const eye = [6, 2, 6] as geometry.TPoint3D
+    const mouseController = UI.controllers.trackballRotator({
         el: state.gl.canvas as HTMLCanvasElement,
-        eye: state.eye,
-        onMouseDrag: p => {
-            state.eye = p
+        viewDistance: vec3.length(vec3.fromValues(...eye)),
+        viewpointDirection: vec3.normalize(vec3.create(), vec3.fromValues(...eye)),
+        viewUp: vec3.fromValues(0, 1, 0),
+        onMouseDrag: () => {
             frame(state)
         },
     })
 
-    return Object.assign(state, {
-        discardUI() {
+    Object.defineProperty(state, "viewMatrix", {
+        get() {
+            return mouseController.viewMatrix
+        },
+    })
+
+    Object.defineProperty(state, "discardUI", {
+        value() {
             projectionSelect.discard()
             mouseController.discard()
-        }
+        },
     })
-}
 
+    return state
+}
 
 let applet: IApplet = {
     get name() {

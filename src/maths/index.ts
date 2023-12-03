@@ -12,3 +12,11 @@ export function radToDeg(
 ): number {
     return radians*180/Math.PI
 }
+
+export function clamp(
+    value: number,
+    min: number,
+    max: number,
+): number {
+    return Math.min(Math.max(value, min), max)
+}
