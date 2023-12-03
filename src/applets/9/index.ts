@@ -55,12 +55,12 @@ function createVerticeGenerator(sideSize: number, getNoise: TNoise2DGenerator) {
     }
 }
 
-function createSurfaceWireframe(
+function createSurface(
     sideSize: number,
     getNoise: TNoise2DGenerator,
 ) {
     let offset = 0
-    const vertices = new Float32Array(3*6*(sideSize - 1)**2)
+    const vertices = new Float32Array(3*6*((sideSize + 1)**2 + 2*(sideSize - 1)))
     const getVertice = createVerticeGenerator(sideSize, getNoise)
 
     for (let [col, row] of cartesianProduct([0, sideSize], [0, sideSize])) {
@@ -95,41 +95,6 @@ function createSurfaceWireframe(
             vertices.set(v2, offset); offset += 3
             vertices.set(v3, offset); offset += 3
         }
-    }
-
-}
-
-function createSurface(
-    sideSize: number,
-    getNoise: TNoise2DGenerator,
-) {
-    let offset = 0
-    const vertices = new Float32Array(3*6*(sideSize - 1)**2)
-    const getVertice = createVerticeGenerator(sideSize, getNoise)
-
-    for (let [col, row] of cartesianProduct([0, sideSize - 1], [0, sideSize - 1])) {
-        // v0    v1
-        // +-----+-----+
-        // |   / |   / |
-        // | /   | /   |
-        // +-----+-----+
-        // v2    v3    |
-        // |     |     |
-        // +-----+-----+
-        const v0 = getVertice(col, row)
-        const v1 = getVertice(col + 1, row)
-        const v2 = getVertice(col, row + 1)
-        const v3 = getVertice(col + 1, row + 1)
-
-        // v0, v2, v3 triangle
-        vertices.set(v0, offset); offset += 3
-        vertices.set(v2, offset); offset += 3
-        vertices.set(v1, offset); offset += 3
-
-        // v1, v2, v3 triangle
-        vertices.set(v1, offset); offset += 3
-        vertices.set(v2, offset); offset += 3
-        vertices.set(v3, offset); offset += 3
     }
     return vertices
 }
@@ -235,8 +200,7 @@ function frame(state: TState) {
     mat4.multiply(transform, projection, modelView)
 
     gl.uniformMatrix4fv(state.tranformUniformLocation, false, transform)
-    // gl.drawArrays(gl.LINES, 0, state.vertices.length/3)
-    gl.drawArrays(gl.TRIANGLES, 0, state.vertices.length/3)
+    gl.drawArrays(gl.LINES, 0, state.vertices.length/3)
 }
 
 let state: TState | null
