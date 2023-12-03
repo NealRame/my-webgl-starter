@@ -23,6 +23,7 @@ import * as shaderSource from "./shaders"
 import type {
     IApplet,
 } from "../types"
+import { TNoise2DGenerator } from "../../maths/noise"
 
 type TState = {
     settings: HTMLFormElement
@@ -40,6 +41,97 @@ type TState = {
 
     readonly viewMatrix?: mat4
     discardUI?: () => void
+}
+
+function createVerticeGenerator(sideSize: number, getNoise: TNoise2DGenerator) {
+    const colToX = (col: number) =>  (2*col/sideSize - 1)
+    const rowToY = (row: number) => -(2*row/sideSize - 1)
+
+    return (col: number, row: number) => {
+        const x = colToX(col)
+        const y = rowToY(row)
+        const z = getNoise(x, y)
+        return [x, y, z] as geometry.TPoint3D
+    }
+}
+
+function createSurfaceWireframe(
+    sideSize: number,
+    getNoise: TNoise2DGenerator,
+) {
+    let offset = 0
+    const vertices = new Float32Array(3*6*(sideSize - 1)**2)
+    const getVertice = createVerticeGenerator(sideSize, getNoise)
+
+    for (let [col, row] of cartesianProduct([0, sideSize], [0, sideSize])) {
+        // v0    v1
+        // +-----+-----+
+        // |   / |   / |
+        // | /   | /   |
+        // +-----+-----+
+        // v2    v3
+        const v0 = getVertice(col, row)
+        const v1 = getVertice(col + 1, row)
+        const v2 = getVertice(col, row + 1)
+        const v3 = getVertice(col + 1, row + 1)
+
+        // line v0, v1
+        vertices.set(v0, offset); offset += 3
+        vertices.set(v1, offset); offset += 3
+        // line v0, v2
+        vertices.set(v0, offset); offset += 3
+        vertices.set(v2, offset); offset += 3
+        // line v1, v2
+        vertices.set(v1, offset); offset += 3
+        vertices.set(v2, offset); offset += 3
+
+        if (col === sideSize - 1) {
+            // line v1, v3
+            vertices.set(v1, offset); offset += 3
+            vertices.set(v3, offset); offset += 3
+        }
+        if (row === sideSize - 1) {
+            // line v2, v3
+            vertices.set(v2, offset); offset += 3
+            vertices.set(v3, offset); offset += 3
+        }
+    }
+
+}
+
+function createSurface(
+    sideSize: number,
+    getNoise: TNoise2DGenerator,
+) {
+    let offset = 0
+    const vertices = new Float32Array(3*6*(sideSize - 1)**2)
+    const getVertice = createVerticeGenerator(sideSize, getNoise)
+
+    for (let [col, row] of cartesianProduct([0, sideSize - 1], [0, sideSize - 1])) {
+        // v0    v1
+        // +-----+-----+
+        // |   / |   / |
+        // | /   | /   |
+        // +-----+-----+
+        // v2    v3    |
+        // |     |     |
+        // +-----+-----+
+        const v0 = getVertice(col, row)
+        const v1 = getVertice(col + 1, row)
+        const v2 = getVertice(col, row + 1)
+        const v3 = getVertice(col + 1, row + 1)
+
+        // v0, v2, v3 triangle
+        vertices.set(v0, offset); offset += 3
+        vertices.set(v2, offset); offset += 3
+        vertices.set(v1, offset); offset += 3
+
+        // v1, v2, v3 triangle
+        vertices.set(v1, offset); offset += 3
+        vertices.set(v2, offset); offset += 3
+        vertices.set(v3, offset); offset += 3
+    }
+    return vertices
 }
 
 function setupUI(
@@ -87,46 +179,11 @@ function init(
     gl.enable(gl.DEPTH_TEST)
 
     const gridResolution = 32
-
-    const vertices: Array<geometry.TPoint3D> = []
-
-    const noiseSeed = Date.now()
     const getNoise = noise.createNoise2DGenerator({
-        seed: noiseSeed,
+        seed: Date.now(),
     })
 
-    const colToX = (col: number) => 2*col/gridResolution - 1
-    const rowToY = (row: number) => -(2*row/gridResolution - 1)
-
-    const vertice = (col: number, row: number) => {
-        const x = colToX(col)
-        const y = rowToY(row)
-        const z = getNoise(x, y)
-        return [x, y, z] as geometry.TPoint3D
-    }
-    // const vertice = (col: number, row: number) => [colToX(col), rowToY(row), 0] as TPoint
-
-    for (let [col, row] of cartesianProduct([0, gridResolution], [0, gridResolution])) {
-        const v1 = vertice(col, row)
-        const v2 = vertice(col + 1, row)
-        const v3 = vertice(col, row + 1)
-        const v4 = vertice(col + 1, row + 1)
-        // v1    v2
-        // +-----+-----+
-        // |   / |   / |
-        // | /   | /   |
-        // +-----+-----+
-        // v3    v4
-        vertices.push(v1, v3, v1, v2, v3, v2,)
-        if (col === gridResolution - 1) {
-            vertices.push(v2, v4)
-        }
-        if (row === gridResolution - 1) {
-            vertices.push(v3, v4)
-        }
-    }
-
-    // console.log(vertices)
+    const vertices = createSurface(gridResolution, getNoise)
 
     const tranformUniformLocation = gl.getUniformLocation(program, "u_MVP_matrix")
     if (tranformUniformLocation == null) {
@@ -147,8 +204,7 @@ function init(
         gridResolution,
 
         getNoise,
-
-        vertices: Float32Array.from(vertices.flat()),
+        vertices,
 
         positionAttributeLocation,
         tranformUniformLocation,
@@ -179,7 +235,8 @@ function frame(state: TState) {
     mat4.multiply(transform, projection, modelView)
 
     gl.uniformMatrix4fv(state.tranformUniformLocation, false, transform)
-    gl.drawArrays(gl.LINES, 0, state.vertices.length/3)
+    // gl.drawArrays(gl.LINES, 0, state.vertices.length/3)
+    gl.drawArrays(gl.TRIANGLES, 0, state.vertices.length/3)
 }
 
 let state: TState | null
