@@ -207,7 +207,7 @@ let state: TState | null
 
 let applet: IApplet = {
     get name() {
-        return "Exercice 8"
+        return "Exercice 9"
     },
     setup({
         canvas,
