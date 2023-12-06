@@ -24,7 +24,7 @@ type TState = {
 }
 
 function setupUI(state: TState) {
-    UI.widget.createNumberInput(state.settings, {
+    UI.widgets.createNumberInput(state.settings, {
         label: "Red",
         min: 0,
         max: 1,
@@ -36,7 +36,7 @@ function setupUI(state: TState) {
             state.red = value
         },
     })
-    UI.widget.createNumberInput(state.settings, {
+    UI.widgets.createNumberInput(state.settings, {
         label: "Green",
         min: 0,
         max: 1,
@@ -48,7 +48,7 @@ function setupUI(state: TState) {
             state.green = value
         },
     })
-    UI.widget.createNumberInput(state.settings, {
+    UI.widgets.createNumberInput(state.settings, {
         label: "Blue",
         min: 0,
         max: 1,

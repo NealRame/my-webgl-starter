@@ -37,12 +37,12 @@ function setupUI(
     state: TState,
     update: () => void,
 ) {
-    const widgets: Array<UI.widget.TWidget> = []
+    const widgets: Array<UI.widgets.TWidget> = []
 
     ;["Layer 1", "Layer 2"].forEach((layer, layerIndex) => {
-        ;UI.widget.createHeader(state.settings, layer)
+        ;UI.widgets.createHeader(state.settings, layer)
         ;["Red", "Green", "Blue", "Alpha"].forEach((label, colorIndex) => {
-            widgets.push(UI.widget.createNumberInput(state.settings, {
+            widgets.push(UI.widgets.createNumberInput(state.settings, {
                 label,
                 min: 0,
                 max: 1,
@@ -59,7 +59,7 @@ function setupUI(
             }))
         })
         ;["X", "Y"].forEach((label, index) => {
-            widgets.push(UI.widget.createNumberInput(state.settings, {
+            widgets.push(UI.widgets.createNumberInput(state.settings, {
                 label,
                 unit: "px",
                 min: 0,
@@ -77,7 +77,7 @@ function setupUI(
             }))
         })
         ;["Width", "Height"].forEach((label, index) => {
-            widgets.push(UI.widget.createNumberInput(state.settings, {
+            widgets.push(UI.widgets.createNumberInput(state.settings, {
                 label,
                 unit: "px",
                 min: 0,

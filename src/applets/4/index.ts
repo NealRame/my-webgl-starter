@@ -94,7 +94,7 @@ function setupUI(
         update()
     }
 
-    const shapeSelector = UI.widget.createSelect(state.settings, {
+    const shapeSelector = UI.widgets.createSelect(state.settings, {
         label: "Shape",
         values: Object.keys(state.shapes),
         get value() {

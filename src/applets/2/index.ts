@@ -37,12 +37,12 @@ function setupUI(
     state: TState,
     update: () => void,
 ) {
-    const widgets: Array<UI.widget.TWidget> = []
+    const widgets: Array<UI.widgets.TWidget> = []
 
     ;["A", "B", "C"].forEach((label, index) => {
-        ;UI.widget.createHeader(state.settings, label)
+        ;UI.widgets.createHeader(state.settings, label)
         ;["r", "g", "b"].forEach((color, colorIndex) => {
-            widgets.push(UI.widget.createNumberInput(state.settings, {
+            widgets.push(UI.widgets.createNumberInput(state.settings, {
                 label: `${color}`,
                 min: 0,
                 max: 1,
