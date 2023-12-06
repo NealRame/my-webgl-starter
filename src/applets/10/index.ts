@@ -41,7 +41,7 @@ type TState = {
     positionAttributeLocation: number
     normalAttributeLocation: number
 
-
+    noiseSettings: Required<noise.TNoise2DGeneratorOptions>
     getNoise: noise.TNoise2DGenerator
 
     gridResolution: number
@@ -114,6 +114,101 @@ function setupUI(
         },
     })
 
+    const gridResolution = UI.widgets.createNumberInput(state.settings, {
+        label: "Smoothness",
+        min: 32,
+        max: 256,
+        step: 1,
+        get value() {
+            return state.gridResolution
+        },
+        set value(value) {
+            state.gridResolution = value
+        },
+    })
+
+    const amplitude = UI.widgets.createNumberInput(state.settings, {
+        label: "Amplitude",
+        min: 0,
+        max: 1,
+        step: 0.1,
+        get value() {
+            return state.noiseSettings.amplitude
+        },
+        set value(value) {
+            state.noiseSettings.amplitude = value
+        },
+    })
+
+    const frequency = UI.widgets.createNumberInput(state.settings, {
+        label: "Frequency",
+        min: 0,
+        max: 10,
+        step: 0.1,
+        get value() {
+            return state.noiseSettings.frequency
+        },
+        set value(value) {
+            state.noiseSettings.frequency = value
+        },
+    })
+
+    const octaves = UI.widgets.createNumberInput(state.settings, {
+        label: "Octaves",
+        min: 1,
+        max: 8,
+        step: 1,
+        get value() {
+            return state.noiseSettings.octaves
+        },
+        set value(value) {
+            state.noiseSettings.octaves = value
+        },
+    })
+
+    const persistence = UI.widgets.createNumberInput(state.settings, {
+        label: "Persistence",
+        min: 0,
+        max: 1,
+        step: 0.1,
+        get value() {
+            return state.noiseSettings.persistence
+        },
+        set value(value) {
+            state.noiseSettings.persistence = value
+        },
+    })
+
+    const scale = UI.widgets.createNumberInput(state.settings, {
+        label: "Scale",
+        min: 0.1,
+        max: 10,
+        step: 0.1,
+        get value() {
+            return state.noiseSettings.scale
+        },
+        set value(value) {
+            state.noiseSettings.scale = value
+        },
+    })
+
+    const updateNoiseSettings = () => {
+        state.getNoise = noise.createNoise2DGenerator(state.noiseSettings)
+        state.vertices = createSurface(state.gridResolution, state.getNoise)
+        state.normals = geometry.normals(state.vertices)
+        frame(state)
+    }
+
+    const seed = UI.widgets.createButton(state.settings, {
+        label: "Update seed",
+        update: () => {
+            state.noiseSettings.seed = Date.now()
+            updateNoiseSettings()
+        },
+    })
+
+    state.settings.addEventListener("input", updateNoiseSettings)
+
     Object.defineProperty(state, "viewMatrix", {
         get() {
             return mouseController.viewMatrix
@@ -123,6 +218,14 @@ function setupUI(
     Object.defineProperty(state, "discardUI", {
         value() {
             mouseController.discard()
+            gridResolution.discard()
+            amplitude.discard()
+            frequency.discard()
+            octaves.discard()
+            persistence.discard()
+            scale.discard()
+            seed.discard()
+            state.settings.removeEventListener("input", updateNoiseSettings)
         },
     })
 
@@ -145,6 +248,10 @@ function init(
     gl.enable(gl.DEPTH_TEST)
 
     const gridResolution = 64
+    const noiseSettings = {
+        ...noise.noise2DGeneratorConfigDefaults,
+        seed: Date.now(),
+    }
     const getNoise = noise.createNoise2DGenerator({
         seed: Date.now(),
     })
@@ -199,9 +306,10 @@ function init(
         gl,
         program,
 
+        noiseSettings,
+        getNoise,
         gridResolution,
 
-        getNoise,
         vertices,
         normals,
 
