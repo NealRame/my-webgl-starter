@@ -13,7 +13,7 @@ export type TNoise2DGeneratorOptions = {
     seed?: number,
 }
 
-const noise2DGeneratorConfigDefaults = {
+export const noise2DGeneratorConfigDefaults = {
     amplitude: 1,
     frequency: 1,
     octaves: 1,
