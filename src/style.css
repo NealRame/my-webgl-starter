@@ -60,10 +60,14 @@
     margin: 0;
 }
 
-#applet-settings>.field {
+#applet-settings > button {
+    grid-column: 1/span 3;
+}
+
+#applet-settings > .field {
     text-align: right;
 }
 
-#applet-settings>.field::after {
+#applet-settings > .field::after {
     content: ':';
 }
