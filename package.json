@@ -12,6 +12,6 @@
     "gl-matrix": "^3.4.3",
     "open-simplex-noise": "^2.5.0",
     "typescript": "^5.3.3",
-    "vite": "^4.4.5"
+    "vite": "^5.0.10"
   }
 }
