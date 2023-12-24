@@ -54,8 +54,8 @@ type TState = {
 }
 
 function createVerticeGenerator(sideSize: number, getNoise: TNoise2DGenerator) {
-    const colToX = (col: number) =>  (2*col/sideSize - 1)
-    const rowToY = (row: number) => -(2*row/sideSize - 1)
+    const colToX = (col: number) =>  (2*col/sideSize - 1)*8
+    const rowToY = (row: number) => -(2*row/sideSize - 1)*8
 
     return (col: number, row: number) => {
         const x = colToX(col)
@@ -103,7 +103,7 @@ function createSurface(
 function setupUI(
     state: TState,
 ): TState {
-    const eye = [0, 0, 10] as geometry.TPoint3D
+    const eye = [0, -12, 10] as geometry.TPoint3D
     const mouseController = UI.controllers.trackballRotator({
         el: state.gl.canvas as HTMLCanvasElement,
         viewDistance: vec3.length(vec3.fromValues(...eye)),
