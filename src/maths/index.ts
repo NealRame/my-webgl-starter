@@ -1,5 +1,6 @@
 export * as geometry from "./geometry"
 export * as noise from "./noise"
+export * as numerics from "./numerics"
 
 export function degToRad(
     degrees: number,
@@ -13,10 +14,3 @@ export function radToDeg(
     return radians*180/Math.PI
 }
 
-export function clamp(
-    value: number,
-    min: number,
-    max: number,
-): number {
-    return Math.min(Math.max(value, min), max)
-}

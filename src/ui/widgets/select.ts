@@ -5,7 +5,6 @@ import {
 export type TSelectOptions = {
     label?: string,
     values: Array<string | [string, string]>,
-    update?: () => void,
     get value(): string,
     set value(value: string),
 }

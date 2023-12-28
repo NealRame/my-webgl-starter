@@ -23,7 +23,6 @@ import * as shaderSource from "./shaders"
 import type {
     IApplet,
 } from "../types"
-import { TNoise2DGenerator } from "../../maths/noise"
 
 type TState = {
     settings: HTMLFormElement
@@ -43,7 +42,7 @@ type TState = {
     discardUI?: () => void
 }
 
-function createVerticeGenerator(sideSize: number, getNoise: TNoise2DGenerator) {
+function createVerticeGenerator(sideSize: number, getNoise: noise.TNoise2DGenerator) {
     const colToX = (col: number) =>  (2*col/sideSize - 1)
     const rowToY = (row: number) => -(2*row/sideSize - 1)
 
@@ -57,7 +56,7 @@ function createVerticeGenerator(sideSize: number, getNoise: TNoise2DGenerator) {
 
 function createSurface(
     sideSize: number,
-    getNoise: TNoise2DGenerator,
+    getNoise: noise.TNoise2DGenerator,
 ) {
     let offset = 0
     const vertices = new Float32Array(3*6*((sideSize + 1)**2 + 2*(sideSize - 1)))
@@ -144,7 +143,7 @@ function init(
     gl.enable(gl.DEPTH_TEST)
 
     const gridResolution = 32
-    const getNoise = noise.createNoise2DGenerator({
+    const getNoise = noise.createFractionalBrownianMotion({
         seed: Date.now(),
     })
 

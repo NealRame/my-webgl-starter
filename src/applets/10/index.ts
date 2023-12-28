@@ -41,7 +41,7 @@ type TState = {
     positionAttributeLocation: number
     normalAttributeLocation: number
 
-    noiseSettings: Required<noise.TNoise2DGeneratorOptions>
+    noiseSettings: Required<noise.TFractionalBrownianMotionOptions>
     getNoise: noise.TNoise2DGenerator
 
     gridResolution: number
@@ -104,6 +104,14 @@ function setupUI(
     state: TState,
 ): TState {
     const eye = [0, -12, 10] as geometry.TPoint3D
+
+    const refresh = () => {
+        state.getNoise = noise.createFractionalBrownianMotion(state.noiseSettings)
+        state.vertices = createSurface(state.gridResolution, state.getNoise)
+        state.normals = geometry.normals(state.vertices)
+        frame(state)
+    }
+
     const mouseController = UI.controllers.trackballRotator({
         el: state.gl.canvas as HTMLCanvasElement,
         viewDistance: vec3.length(vec3.fromValues(...eye)),
@@ -117,39 +125,28 @@ function setupUI(
     const gridResolution = UI.widgets.createNumberInput(state.settings, {
         label: "Smoothness",
         min: 32,
-        max: 256,
+        max: 512,
         step: 1,
         get value() {
             return state.gridResolution
         },
         set value(value) {
             state.gridResolution = value
+            refresh()
         },
     })
 
-    const amplitude = UI.widgets.createNumberInput(state.settings, {
-        label: "Amplitude",
+    const gain = UI.widgets.createNumberInput(state.settings, {
+        label: "Gain",
         min: 0,
         max: 1,
         step: 0.1,
         get value() {
-            return state.noiseSettings.amplitude
+            return state.noiseSettings.gain
         },
         set value(value) {
-            state.noiseSettings.amplitude = value
-        },
-    })
-
-    const frequency = UI.widgets.createNumberInput(state.settings, {
-        label: "Frequency",
-        min: 0,
-        max: 10,
-        step: 0.1,
-        get value() {
-            return state.noiseSettings.frequency
-        },
-        set value(value) {
-            state.noiseSettings.frequency = value
+            state.noiseSettings.gain = value
+            refresh()
         },
     })
 
@@ -163,19 +160,21 @@ function setupUI(
         },
         set value(value) {
             state.noiseSettings.octaves = value
+            refresh()
         },
     })
 
-    const persistence = UI.widgets.createNumberInput(state.settings, {
-        label: "Persistence",
-        min: 0,
-        max: 1,
+    const lacunarity = UI.widgets.createNumberInput(state.settings, {
+        label: "Lacunarity",
+        min: 1,
+        max: 8,
         step: 0.1,
         get value() {
-            return state.noiseSettings.persistence
+            return state.noiseSettings.lacunarity
         },
         set value(value) {
-            state.noiseSettings.persistence = value
+            state.noiseSettings.lacunarity = value
+            refresh()
         },
     })
 
@@ -189,25 +188,33 @@ function setupUI(
         },
         set value(value) {
             state.noiseSettings.scale = value
+            refresh()
         },
     })
 
-    const updateNoiseSettings = () => {
-        state.getNoise = noise.createNoise2DGenerator(state.noiseSettings)
-        state.vertices = createSurface(state.gridResolution, state.getNoise)
-        state.normals = geometry.normals(state.vertices)
-        frame(state)
-    }
+    const type = UI.widgets.createSelect(state.settings, {
+        label: "Type",
+        values: [
+            noise.ENoiseFunction.None,
+            noise.ENoiseFunction.Billowy,
+            noise.ENoiseFunction.Ridged,
+        ],
+        get value() {
+            return state.noiseSettings.type
+        },
+        set value(value) {
+            state.noiseSettings.type = value
+            refresh()
+        },
+    })
 
     const seed = UI.widgets.createButton(state.settings, {
         label: "Update seed",
         update: () => {
             state.noiseSettings.seed = Date.now()
-            updateNoiseSettings()
+            refresh()
         },
     })
-
-    state.settings.addEventListener("input", updateNoiseSettings)
 
     Object.defineProperty(state, "viewMatrix", {
         get() {
@@ -219,13 +226,12 @@ function setupUI(
         value() {
             mouseController.discard()
             gridResolution.discard()
-            amplitude.discard()
-            frequency.discard()
+            gain.discard()
+            lacunarity.discard()
             octaves.discard()
-            persistence.discard()
             scale.discard()
             seed.discard()
-            state.settings.removeEventListener("input", updateNoiseSettings)
+            type.discard()
         },
     })
 
@@ -249,12 +255,10 @@ function init(
 
     const gridResolution = 64
     const noiseSettings = {
-        ...noise.noise2DGeneratorConfigDefaults,
+        ...noise.FBMConfigDefaults,
         seed: Date.now(),
     }
-    const getNoise = noise.createNoise2DGenerator({
-        seed: Date.now(),
-    })
+    const getNoise = noise.createFractionalBrownianMotion(noiseSettings)
 
     const vertices = createSurface(gridResolution, getNoise)
     const normals = geometry.normals(vertices)

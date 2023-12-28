@@ -9,9 +9,12 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.2",
     "gl-matrix": "^3.4.3",
     "open-simplex-noise": "^2.5.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.10"
+    "vite": "^5.0.10",
+    "vue": "^3.3.13",
+    "vue-tsc": "^1.8.26"
   }
 }
