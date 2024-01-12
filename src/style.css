@@ -8,6 +8,12 @@
     text-rendering: optimizeLegibility;
 }
 
+#app {
+    display: block;
+    position: relative;
+    height: 100vh;
+}
+
 #screen {
     width: 100%;
     height: 100%;

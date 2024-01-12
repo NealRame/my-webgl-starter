@@ -4,14 +4,18 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "node scripts/build/serve.js",
+    "build": "node scripts/build/build.js"
   },
   "devDependencies": {
+    "@types/vue": "^2.0.0",
     "@vitejs/plugin-vue": "^4.5.2",
+    "esbuild": "^0.19.11",
+    "esbuild-plugin-tsc": "^0.4.0",
+    "esbuild-plugin-vue3": "^0.4.0",
     "gl-matrix": "^3.4.3",
     "open-simplex-noise": "^2.5.0",
+    "portscanner": "^2.2.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "vue": "^3.3.13",
